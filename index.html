@@ -212,6 +212,54 @@
       <div class="stat"><b id="homeAccuracy">—</b><span>точность за всё время</span></div>
       <div class="stat"><b id="homeWeak">—</b><span>слова на повторении</span></div>
     </div>
+ <!-- ОБЛАЧНЫЙ АККАУНТ -->
+<div id="authCard" style="margin-top:24px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;">
+      <span>☁️ Личный кабинет</span>
+    </div>
+    <div id="authBadge" style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel);color:var(--ink-faint);">офлайн</div>
+  </div>
+
+  <div id="authLoggedOut">
+    <p style="font-size:12px;color:var(--ink-faint);line-height:1.4;margin-bottom:12px;">
+      Войдите по почте и паролю, чтобы прогресс автоматически сохранялся в облаке и был доступен с любого устройства.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input type="email" id="authEmail" placeholder="Email" style="padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;">
+      <input type="password" id="authPassword" placeholder="Пароль (от 6 символов)" style="padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;">
+      <div style="display:flex;gap:8px;">
+        <button id="btnSignIn" style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;">Войти</button>
+        <button id="btnSignUp" style="flex:1;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">Регистрация</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="authLoggedIn" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span id="authUserEmail" style="font-size:13px;color:var(--ink);font-weight:500;"></span>
+      <button id="btnSignOut" style="padding:4px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--ink-faint);cursor:pointer;">Выйти</button>
+    </div>
+    <div style="font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;">
+      <span style="display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%;"></span>
+      <span>Синхронизация с облаком активна</span>
+    </div>
+  </div>
+
+  <div id="authMsg" style="font-size:12px;color:#e06c75;margin-top:8px;display:none;"></div>
+</div>
+    <div style="margin-top:28px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+  <div style="font-weight:600;font-size:14px;margin-bottom:6px;">💾 Резервная копия прогресса</div>
+  <div style="font-size:12px;color:var(--ink-faint);line-height:1.4;margin-bottom:12px;">
+    Прогресс сохраняется в браузере. Вы также можете скачать резервную копию или восстановить данные на другом устройстве.
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="btnExportBackup" style="flex:1;min-width:140px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">📥 Скачать бэкап</button>
+    <button id="btnImportBackup" style="flex:1;min-width:140px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">📤 Восстановить из файла</button>
+    <input type="file" id="backupFileInput" accept=".json" style="display:none;">
+  </div>
+  <div id="backupNotice" style="font-size:12px;color:var(--accent);margin-top:8px;display:none;"></div>
+</div>
   </div>
 
   <!-- QUIZ -->
@@ -273,54 +321,7 @@
     </div>
     <div class="wlist-head">сложные слова (чаще всего с ошибками)</div>
     <div id="hardList"></div>
-   <!-- ОБЛАЧНЫЙ АККАУНТ -->
-<div id="authCard" style="margin-top:24px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;">
-      <span>☁️ Личный кабинет</span>
-    </div>
-    <div id="authBadge" style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel);color:var(--ink-faint);">офлайн</div>
-  </div>
-
-  <div id="authLoggedOut">
-    <p style="font-size:12px;color:var(--ink-faint);line-height:1.4;margin-bottom:12px;">
-      Войдите по почте и паролю, чтобы прогресс автоматически сохранялся в облаке и был доступен с любого устройства.
-    </p>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <input type="email" id="authEmail" placeholder="Email" style="padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;">
-      <input type="password" id="authPassword" placeholder="Пароль (от 6 символов)" style="padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;">
-      <div style="display:flex;gap:8px;">
-        <button id="btnSignIn" style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;">Войти</button>
-        <button id="btnSignUp" style="flex:1;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">Регистрация</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="authLoggedIn" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <span id="authUserEmail" style="font-size:13px;color:var(--ink);font-weight:500;"></span>
-      <button id="btnSignOut" style="padding:4px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--ink-faint);cursor:pointer;">Выйти</button>
-    </div>
-    <div style="font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;">
-      <span style="display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%;"></span>
-      <span>Синхронизация с облаком активна</span>
-    </div>
-  </div>
-
-  <div id="authMsg" style="font-size:12px;color:#e06c75;margin-top:8px;display:none;"></div>
-</div>
-    <div style="margin-top:28px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
-  <div style="font-weight:600;font-size:14px;margin-bottom:6px;">💾 Резервная копия прогресса</div>
-  <div style="font-size:12px;color:var(--ink-faint);line-height:1.4;margin-bottom:12px;">
-    Прогресс сохраняется в браузере. Вы также можете скачать резервную копию или восстановить данные на другом устройстве.
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <button id="btnExportBackup" style="flex:1;min-width:140px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">📥 Скачать бэкап</button>
-    <button id="btnImportBackup" style="flex:1;min-width:140px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">📤 Восстановить из файла</button>
-    <input type="file" id="backupFileInput" accept=".json" style="display:none;">
-  </div>
-  <div id="backupNotice" style="font-size:12px;color:var(--accent);margin-top:8px;display:none;"></div>
-</div>
+   
 
   </div>
 
