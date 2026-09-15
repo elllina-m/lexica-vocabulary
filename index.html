@@ -70,7 +70,18 @@
   .index-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px 26px;text-align:center;position:relative;margin-bottom:18px;}
   .index-card:before{content:"";position:absolute;left:22px;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom, transparent 0 6px, var(--line) 6px 7px);}
   .qword{font-family:var(--font-display);font-size:32px;font-weight:600;}
-  .qhint{font-size:13px;color:var(--ink-faint);margin-top:8px;}
+  .qhint-wrap{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;}
+  .qhint{font-size:13px;color:var(--ink-faint);cursor:pointer;transition:color .15s;}
+  .qhint:hover{color:var(--ink-dim);}
+  .qhint-edit-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:12px;padding:2px 4px;border-radius:4px;opacity:0.6;transition:opacity .15s,color .15s;}
+  .qhint-edit-btn:hover{opacity:1;color:var(--amber);}
+  .qhint-edit-box{margin-top:10px;text-align:left;}
+  .qhint-edit-box textarea{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:var(--font-body);font-size:13px;padding:8px 10px;resize:vertical;min-height:48px;}
+  .qhint-edit-box textarea:focus{outline:none;border-color:var(--amber);}
+  .qhint-actions{display:flex;gap:6px;margin-top:6px;justify-content:center;}
+  .qhint-actions button{font-family:var(--font-body);font-size:12px;font-weight:500;border-radius:6px;padding:5px 10px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink-dim);}
+  .qhint-actions button.save{background:var(--amber-dim);color:var(--amber);border-color:var(--amber);}
+  .qhint-tag{font-size:10px;color:var(--amber);margin-left:6px;font-weight:500;}
   .options{display:flex;flex-direction:column;gap:10px;}
   .opt{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--font-body);font-size:15px;text-align:left;padding:14px 16px;border-radius:11px;cursor:pointer;}
   .opt:active{transform:scale(.99);}
@@ -208,7 +219,18 @@
     <div class="index-card">
       <div class="qword" id="qWord">—</div>
       <span class="lvl-badge" id="qLevel" style="display:none;"></span>
-      <div class="qhint" id="qHint"></div>
+      <div class="qhint-wrap" id="qHintWrap">
+        <div class="qhint" id="qHint"></div>
+        <button class="qhint-edit-btn" id="qHintEditBtn" title="Изменить пример">✏️</button>
+      </div>
+      <div class="qhint-edit-box" id="qHintEditBox" style="display:none;">
+        <textarea id="qHintInput" placeholder="Введите свой пример со словом..."></textarea>
+        <div class="qhint-actions">
+          <button type="button" class="save" id="qHintSave">сохранить</button>
+          <button type="button" class="reset" id="qHintReset" style="display:none;">сбросить</button>
+          <button type="button" class="cancel" id="qHintCancel">отмена</button>
+        </div>
+      </div>
     </div>
     <div class="options" id="qOptions"></div>
     <button class="next-btn" id="nextBtn">дальше →</button>
@@ -278,7 +300,6 @@ const TOPICS = [
 const BUILTIN_WORDS = [];
 const loadedTopics = {};
 
-// Асинхронная загрузка слов из файлов topics/<id>.json
 async function loadTopicWords(topicId) {
   if (loadedTopics[topicId]) return loadedTopics[topicId];
   try {
@@ -296,16 +317,11 @@ async function loadTopicWords(topicId) {
 async function loadAllBuiltinWords() {
   BUILTIN_WORDS.length = 0;
   let _bid = 0;
-
-  // Загружаем все темы параллельно через fetch
   const promises = TOPICS.map(async (t) => {
     const words = await loadTopicWords(t.id);
     return { topicId: t.id, words };
   });
-
   const results = await Promise.all(promises);
-
-  // Сохраняем стабильный порядок id для сохранения статистики
   results.forEach(({ topicId, words }) => {
     words.forEach(w => {
       BUILTIN_WORDS.push({
@@ -619,7 +635,21 @@ function renderQuizStep(){
   const qLevel = document.getElementById("qLevel");
   if(w.level){ qLevel.textContent = w.level; qLevel.className = "lvl-badge lvl-"+w.level; qLevel.style.display = "inline-block"; }
   else { qLevel.style.display = "none"; }
-  document.getElementById("qHint").textContent = askEnglish ? exampleFor(w) : "выберите перевод";
+  const isCustomEx = !!(customExamples[w.id] && customExamples[w.id].trim());
+  const hintEl = document.getElementById("qHint");
+  const editBtn = document.getElementById("qHintEditBtn");
+  const editBox = document.getElementById("qHintEditBox");
+  const wrapEl = document.getElementById("qHintWrap");
+  editBox.style.display = "none";
+  wrapEl.style.display = "flex";
+
+  if(askEnglish){
+    hintEl.innerHTML = escapeHtml(exampleFor(w)) + (isCustomEx ? '<span class="qhint-tag">свой пример</span>' : '');
+    editBtn.style.display = "inline-block";
+  } else {
+    hintEl.textContent = "выберите перевод";
+    editBtn.style.display = "none";
+  }
   const options = buildOptions(w);
   const box = document.getElementById("qOptions");
   box.innerHTML = "";
@@ -676,6 +706,54 @@ document.getElementById("startBtn").addEventListener("click", startQuiz);
 document.getElementById("restartBtn").addEventListener("click", startQuiz);
 document.getElementById("backBtn").addEventListener("click", ()=> showScreen("home"));
 document.getElementById("nextBtn").addEventListener("click", nextQuizStep);
+
+function openQuizExampleEdit(){
+  const w = quizQueue[quizIndex];
+  if(!w) return;
+  const currentEx = exampleFor(w);
+  const isCustomEx = !!(customExamples[w.id] && customExamples[w.id].trim());
+  document.getElementById("qHintInput").value = currentEx;
+  document.getElementById("qHintReset").style.display = isCustomEx ? "inline-block" : "none";
+  document.getElementById("qHintWrap").style.display = "none";
+  document.getElementById("qHintEditBox").style.display = "block";
+  document.getElementById("qHintInput").focus();
+}
+
+function closeQuizExampleEdit(){
+  document.getElementById("qHintEditBox").style.display = "none";
+  document.getElementById("qHintWrap").style.display = "flex";
+}
+
+document.getElementById("qHintEditBtn").addEventListener("click", openQuizExampleEdit);
+document.getElementById("qHint").addEventListener("click", ()=>{
+  if(direction === "en-ru") openQuizExampleEdit();
+});
+
+document.getElementById("qHintCancel").addEventListener("click", closeQuizExampleEdit);
+
+document.getElementById("qHintSave").addEventListener("click", async ()=>{
+  const w = quizQueue[quizIndex];
+  if(!w) return;
+  const val = document.getElementById("qHintInput").value.trim();
+  if(val && val !== (w.ex || "")){
+    customExamples[w.id] = val;
+  } else {
+    delete customExamples[w.id];
+  }
+  await saveJSON("custom-examples", customExamples);
+  closeQuizExampleEdit();
+  const isCustomEx = !!(customExamples[w.id] && customExamples[w.id].trim());
+  document.getElementById("qHint").innerHTML = escapeHtml(exampleFor(w)) + (isCustomEx ? '<span class="qhint-tag">свой пример</span>' : '');
+});
+
+document.getElementById("qHintReset").addEventListener("click", async ()=>{
+  const w = quizQueue[quizIndex];
+  if(!w) return;
+  delete customExamples[w.id];
+  await saveJSON("custom-examples", customExamples);
+  closeQuizExampleEdit();
+  document.getElementById("qHint").innerHTML = escapeHtml(exampleFor(w));
+});
 
 document.getElementById("dirSwitch").addEventListener("click", ()=>{
   direction = direction==="en-ru" ? "ru-en" : "en-ru";
