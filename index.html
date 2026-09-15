@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#14181F;
@@ -272,6 +273,42 @@
     </div>
     <div class="wlist-head">сложные слова (чаще всего с ошибками)</div>
     <div id="hardList"></div>
+   <!-- ОБЛАЧНЫЙ АККАУНТ -->
+<div id="authCard" style="margin-top:24px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;">
+      <span>☁️ Личный кабинет</span>
+    </div>
+    <div id="authBadge" style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel);color:var(--ink-faint);">офлайн</div>
+  </div>
+
+  <div id="authLoggedOut">
+    <p style="font-size:12px;color:var(--ink-faint);line-height:1.4;margin-bottom:12px;">
+      Войдите по почте и паролю, чтобы прогресс автоматически сохранялся в облаке и был доступен с любого устройства.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input type="email" id="authEmail" placeholder="Email" style="padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;">
+      <input type="password" id="authPassword" placeholder="Пароль (от 6 символов)" style="padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;">
+      <div style="display:flex;gap:8px;">
+        <button id="btnSignIn" style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;">Войти</button>
+        <button id="btnSignUp" style="flex:1;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;">Регистрация</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="authLoggedIn" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span id="authUserEmail" style="font-size:13px;color:var(--ink);font-weight:500;"></span>
+      <button id="btnSignOut" style="padding:4px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--ink-faint);cursor:pointer;">Выйти</button>
+    </div>
+    <div style="font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;">
+      <span style="display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%;"></span>
+      <span>Синхронизация с облаком активна</span>
+    </div>
+  </div>
+
+  <div id="authMsg" style="font-size:12px;color:#e06c75;margin-top:8px;display:none;"></div>
+</div>
     <div style="margin-top:28px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
   <div style="font-weight:600;font-size:14px;margin-bottom:6px;">💾 Резервная копия прогресса</div>
   <div style="font-size:12px;color:var(--ink-faint);line-height:1.4;margin-bottom:12px;">
@@ -852,6 +889,161 @@ if (btnImport && fileInput) {
     fileInput.value = "";
   });
 }
+// === SUPABASE CLOUD SYNC ===
+const SUPABASE_URL = "https://mlyqaexwsvfmshzvegze.supabase.co";
+const SUPABASE_KEY = "sb_publishable_60Sb2ezDOETcbwLxF86CBw_pcgDOQQP";
+const sb = (typeof window.supabase !== "undefined") ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+let currentUser = null;
+let cloudSyncTimeout = null;
+
+function showAuthMsg(msg, isError = true) {
+  const el = document.getElementById("authMsg");
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? "#e06c75" : "var(--accent)";
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 5000);
+}
+
+function updateAuthUI(user) {
+  currentUser = user;
+  const loggedOut = document.getElementById("authLoggedOut");
+  const loggedIn = document.getElementById("authLoggedIn");
+  const badge = document.getElementById("authBadge");
+  const emailOut = document.getElementById("authUserEmail");
+
+  if (user) {
+    if (loggedOut) loggedOut.style.display = "none";
+    if (loggedIn) loggedIn.style.display = "block";
+    if (badge) { badge.textContent = "облако 🟢"; badge.style.color = "#4ade80"; }
+    if (emailOut) emailOut.textContent = user.email;
+  } else {
+    if (loggedOut) loggedOut.style.display = "block";
+    if (loggedIn) loggedIn.style.display = "none";
+    if (badge) { badge.textContent = "офлайн"; badge.style.color = "var(--ink-faint)"; }
+  }
+}
+
+// Загрузка прогресса из облака и объединение с локальным
+async function syncFromCloud(userId) {
+  if (!sb || !userId) return;
+  try {
+    const { data, error } = await sb
+      .from("user_progress")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      if (data.word_stats) wordStats = Object.assign(wordStats, data.word_stats);
+      if (data.custom_examples) customExamples = Object.assign(customExamples, data.custom_examples);
+      if (Array.isArray(data.custom_words)) {
+        const ids = new Set(customWords.map(w => w.id));
+        data.custom_words.forEach(w => { if (!ids.has(w.id)) customWords.push(w); });
+      }
+      if (Array.isArray(data.sessions)) sessions = sessions.concat(data.sessions);
+
+      // Сохраняем объединённые данные обратно в localStorage
+      localStorage.setItem("lexica_word-stats", JSON.stringify(wordStats));
+      localStorage.setItem("lexica_custom-examples", JSON.stringify(customExamples));
+      localStorage.setItem("lexica_custom-words", JSON.stringify(customWords));
+      localStorage.setItem("lexica_sessions", JSON.stringify(sessions));
+
+      renderStats();
+      renderWords();
+    } else {
+      // Первое сохранение в облако
+      triggerCloudSave();
+    }
+  } catch (err) {
+    console.warn("Cloud sync load error:", err);
+  }
+}
+
+// Сохранение в облако (с задержкой 1.5 сек, чтобы не перегружать запросами)
+function triggerCloudSave() {
+  if (!sb || !currentUser) return;
+  clearTimeout(cloudSyncTimeout);
+  cloudSyncTimeout = setTimeout(async () => {
+    try {
+      const payload = {
+        user_id: currentUser.id,
+        word_stats: wordStats,
+        custom_words: customWords,
+        custom_examples: customExamples,
+        sessions: sessions,
+        updated_at: new Date().toISOString()
+      };
+      await sb.from("user_progress").upsert(payload);
+    } catch (err) {
+      console.warn("Cloud save error:", err);
+    }
+  }, 1500);
+}
+
+// Хук в saveJSON для фоновой отправки в облако
+const originalSaveJSON = saveJSON;
+saveJSON = async function(key, val) {
+  await originalSaveJSON(key, val);
+  triggerCloudSave();
+};
+
+// Обработчики кнопок входа / регистрации / выхода
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!sb) return;
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    updateAuthUI(session.user);
+    syncFromCloud(session.user.id);
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      updateAuthUI(session.user);
+      syncFromCloud(session.user.id);
+    } else {
+      updateAuthUI(null);
+    }
+  });
+
+  const btnIn = document.getElementById("btnSignIn");
+  const btnUp = document.getElementById("btnSignUp");
+  const btnOut = document.getElementById("btnSignOut");
+  const emailInput = document.getElementById("authEmail");
+  const passInput = document.getElementById("authPassword");
+
+  if (btnIn) {
+    btnIn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      if (!email || !password) return showAuthMsg("Заполните email и пароль");
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) showAuthMsg(error.message);
+      else showAuthMsg("Вы успешно вошли!", false);
+    });
+  }
+
+  if (btnUp) {
+    btnUp.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      if (!email || password.length < 6) return showAuthMsg("Пароль должен быть от 6 символов");
+      const { error } = await sb.auth.signUp({ email, password });
+      if (error) showAuthMsg(error.message);
+      else showAuthMsg("Регистрация успешна! Проверьте почту для подтверждения или войдите.", false);
+    });
+  }
+
+  if (btnOut) {
+    btnOut.addEventListener("click", async () => {
+      await sb.auth.signOut();
+    });
+  }
+});
 </script>
 </body>
 </html>
