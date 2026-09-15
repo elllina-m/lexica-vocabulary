@@ -350,18 +350,28 @@ let quizIndex = 0;
 let quizCorrect = 0;
 let quizAnswered = false;
 
-async function loadJSON(key, fallback){
-  try{
-    const r = await window.storage.get(key);
-    return r ? JSON.parse(r.value) : fallback;
-  }catch(e){
+async function loadJSON(key, fallback) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const v = localStorage.getItem("lexica_" + key) ?? localStorage.getItem(key);
+      if (v !== null) return JSON.parse(v);
+    }
+    return fallback;
+  } catch (e) {
     return fallback;
   }
 }
-async function saveJSON(key, val){
-  try{ await window.storage.set(key, JSON.stringify(val)); }
-  catch(e){ console.error("storage error", e); }
+
+async function saveJSON(key, val) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("lexica_" + key, JSON.stringify(val));
+    }
+  } catch (e) {
+    console.error("Storage error:", e);
+  }
 }
+
 
 function allWords(){
   let base = selectedTopic==="all" ? BUILTIN_WORDS : BUILTIN_WORDS.filter(w=>w.topic===selectedTopic);
