@@ -1,29 +1,32 @@
-# Лексика · Тренажёр английских слов
+# Lexica · English Vocabulary Trainer
 
-Моё небольшое веб-приложение для изучения и повторения английских слов.
+[English](README.md) · [Русский](README.ru.md)
 
-Вокабулярная база (**по состоянию на 15.09.2026**) — The Oxford 5000™ by CEFR level.
 
-**Сайт:** [lexica-three.vercel.app](https://lexica-three.vercel.app/)
+A lightweight web app for learning and practicing English vocabulary.
 
----
+Vocabulary database (**as of September 15, 2026**) — The Oxford 5000™ by CEFR level.
 
-## ✨ Возможности
-
-- **17 тематических словарей:** от академической лексики и бизнеса до повседневных тем и сленга.
-- **Интервальное повторение:** адаптивный выбор слов с учётом правильных и ошибочных ответов.
-- **Режимы тренировки:** перевод с английского на русский (EN → RU) и обратно (RU → EN).
-- **Свои слова:** возможность добавлять собственные слова с примерами прямо в интерфейсе.
-- **Свои примеры:** можно менять имеющиеся примеры к словам на свои собственные (в разделе «мои слова» при нажатии на желаемое слово).
-- **Сохранение прогресса:** статистика ответов и сессий сохраняется локально в браузере.
+**Live site:** [lexica-three.vercel.app](https://lexica-three.vercel.app/)
 
 ---
 
-## 📁 Структура проекта
+## ✨ Features
+
+- **17 thematic vocabulary sets:** ranging from academic vocabulary and business to everyday topics and slang.
+- **Spaced repetition:** adaptive word selection based on correct and incorrect answers.
+- **Practice modes:** English to Russian (EN → RU) and Russian to English (RU → EN).
+- **Custom words:** add your own vocabulary entries with examples directly in the interface.
+- **Custom examples:** replace existing example sentences with your own (in the "My Words" section by clicking on any word).
+- **Progress tracking:** answer stats and training sessions are saved locally in the browser.
+
+---
+
+## 📁 Project Structure
 
 ```text
-├── index.html        # Основной интерфейс и логика приложения
-└── topics/           # Словарные базы по темам (JSON)
+├── index.html        # Main interface and application logic
+└── topics/           # Vocabulary databases by topic (JSON)
     ├── academic.json
     ├── animals.json
     ├── appearance.json
@@ -34,28 +37,29 @@
 
 ---
 
-## 📄 Структура файлов в разделе topics/
+## 📄 File Structure in `topics/`
 
-Каждое слово в JSON-файлах темы представлено массивом из 4 полей:
+Each word entry in the topic JSON files is represented as a 4-element array:
 
 ```json
 [
-  "word",                          // 1. Английское слово или фраза
-  "перевод, синонимы",             // 2. Перевод на русский
-  "Пример предложения со словом.", // 3. Контекст / пример
-  "B2"                             // 4. Уровень (A1, A2, B1, B2, C1)
+  "word",                          // 1. English word or phrase
+  "translation, synonyms",         // 2. Russian translation
+  "Example sentence with word.",   // 3. Context / usage example
+  "B2"                             // 4. CEFR level (A1, A2, B1, B2, C1)
 ]
 ```
 
 ---
 
-##  В планах для развития
+## 🚀 Roadmap
 
-- Добавить новую лексику
-- Добавить коллокации
-- Добавить фразовые глаголы
-- Добавить возможность вносить свои собственные предложения-примеры к изучаемым словам
+- Add new vocabulary
+- Add collocations
+- Add phrasal verbs
+- Add the ability to write custom example sentences for study words
 
 ---
 
-<sub>Создавалось в том числе при использовании Claude и Lovable.dev</sub>
+<sub>Built with assistance from Claude and Lovable.dev</sub>
+
